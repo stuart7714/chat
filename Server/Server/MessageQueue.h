@@ -3,6 +3,7 @@
 #include <memory>
 #include <mutex>
 #include <queue>
+#include <semaphore>
 
 #include "Message.h"
 
@@ -24,9 +25,9 @@ private:
     // The queue of messages.
     std::queue<std::shared_ptr<Message>> m_queue;
     
-    // A mutex for the condition variable.
+    // A mutex for the shared queue.
     std::mutex m_mutex;
 
-    // The condition variable for when the queue is non-empty.
-    std::condition_variable m_condition;
+    // The semaphore to wait for the queue to contain messages.
+    std::counting_semaphore<> m_semaphore{ 0 };
 };

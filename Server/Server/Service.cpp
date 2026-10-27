@@ -25,7 +25,7 @@ grpc::Status Service::Subscribe(
     // Create a queue of messages which can be sent back
     // to this client via the given writer.
     std::shared_ptr<MessageQueue> messageQueue = std::make_shared<MessageQueue>();
-    m_messageQueues.emplace_back(messageQueue);
+    m_messageQueues.push_back(messageQueue);
 
     // Wait for the message queue to see if there is a message which
     // needs to be sent back to the client.
