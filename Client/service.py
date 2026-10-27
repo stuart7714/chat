@@ -8,16 +8,23 @@ import threading
 from message import Message
 
 
+# The service allows communication with the Chat server.
 class Service:
     def __init__(self, client_id, url):
         self._client_id = client_id
         self._url = url
 
+        # We have a message queue which will contain messages
+        # sent from the Chat server. We can pop messages off this queue
+        # as they arrive.
         self.message_queue = queue.Queue()
 
+        # The Chat server sends back notifications after we subscribe.
         self._notification_stream = None
         self._notification_handler_task = None
 
+        # We need a separate event loop for the asyncio to prevent
+        # interfering with the Tk event loop.
         self._loop = asyncio.new_event_loop()
         threading.Thread(
             target=self._asyncio_thread,
@@ -30,6 +37,7 @@ class Service:
         )
 
     async def _notification_handler(self):
+        # We check notifications for new messages.
         try:
             async for notification in self._notification_stream:
                 message = Message(
@@ -43,6 +51,8 @@ class Service:
         channel = grpc.aio.insecure_channel(self._url)
         self.stub = chat_pb2_grpc.ChatServiceStub(channel)
 
+        # Subscribe to the Chat server and ensure we can read
+        # the stream of notifications sent back.
         request = chat_pb2.SubscribeRequest(client_id=self._client_id)
         self._notification_stream = self.stub.Subscribe(request)
         self._notification_handler_task = asyncio.create_task(

@@ -7,6 +7,7 @@ int main(int argc, char* argv[])
 {
 	try
 	{
+		// Get the command line parameters.
 		cxxopts::Options options("Chat", "A simple Chat server");
 		options.add_options()
 			("h,help", "Print usage")
@@ -18,6 +19,7 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
+		// Run the service.
 		std::string url = parsed["url"].as<std::string>();
 		Service{ url };
 	}

@@ -3,6 +3,7 @@ import tkinter as tk
 import tkinter.font as tkfont
 
 
+# We show all the chat messages as a conversation history.
 class Conversation:
     def __init__(self, main_frame, service):
         self.service = service
@@ -24,9 +25,12 @@ class Conversation:
 
         chat_scrollbar.configure(command=self.chat_text.yview)
 
+        # We check for new messages every 100 ms.
         self.frame.after(100, self.process_client_messages)
 
     def process_client_messages(self):
+        # The service has a message queue which we poll to see if there
+        # are new messages which need to be displayed.
         try:
             while True:
                 client_message = self.service.message_queue.get_nowait()
@@ -38,4 +42,5 @@ class Conversation:
         except queue.Empty:
             pass
 
+        # We check for new messages every 100 ms.
         self.frame.after(100, self.process_client_messages)

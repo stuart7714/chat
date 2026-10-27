@@ -8,6 +8,8 @@ from input import Input
 from service import Service
 
 
+# The Chat client needs a client-id to identify the user (e.g. "Alice" or "Bob")
+# and a URL to connect to the Chat server (e.g. "localhost:50051")
 parser = argparse.ArgumentParser(
     description="A simple Chat client"
 )
@@ -23,8 +25,13 @@ root.geometry("600x500")
 main_frame = tk.Frame(root, padx=5, pady=5)
 main_frame.pack(fill=tk.BOTH, expand=True)
 
+# The service allows communication with the Chat server.
 service = Service(args.client_id, args.url)
+
+# We show all the chat messages as a conversation history.
 conversation = Conversation(main_frame, service)
+
+# The user enters messages to send to all users connected to the Chat server.
 input = Input(main_frame, service)
 
 root.mainloop()

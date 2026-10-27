@@ -22,9 +22,14 @@ grpc::Status Service::Subscribe(
     const chat::SubscribeRequest* request,
     grpc::ServerWriter<chat::Notification>* writer)
 {
+    // Create a queue of messages which can be sent back
+    // to this client via the given writer.
     std::shared_ptr<MessageQueue> messageQueue = std::make_shared<MessageQueue>();
     m_messageQueues.emplace_back(messageQueue);
 
+    // Wait for the message queue to see if there is a message which
+    // needs to be sent back to the client.
+    // Also, periodically check to see if the gRPC connection is broken.
     while (!context->IsCancelled())
     {
         std::shared_ptr<Message> message = messageQueue->WaitAndPop(std::chrono::milliseconds(100));
@@ -34,6 +39,7 @@ grpc::Status Service::Subscribe(
         }
     }
 
+    // The gRPC connection is broken so forget the client subscription.
     std::erase(m_messageQueues, messageQueue);
 
     return grpc::Status::OK;
@@ -47,6 +53,9 @@ grpc::Status Service::SendMessage(
     const std::string& clientId = request->client_id();
     const std::string& text = request->text();
 
+    // A client has sent a message which needs to be broadcast
+    // to all subscribed clients. We add this message to all message
+    // queues (there is a queue for each subscribed client).
     std::shared_ptr<Message> message = std::make_shared<Message>(clientId, text);
     for (std::shared_ptr<MessageQueue>& messageQueue : m_messageQueues)
     {
