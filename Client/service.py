@@ -6,6 +6,8 @@ import queue
 import threading
 
 from message import Message
+from retry import Retry
+from tkinter import messagebox
 
 
 # The service allows communication with the Chat server.
@@ -38,31 +40,30 @@ class Service:
 
     async def _notification_handler(self):
         # We check notifications for new messages.
-        try:
-            async for notification in self._notification_stream:
-                message = Message(
-                    notification.client_message.client_id,
-                    notification.client_message.text)
-                self.message_queue.put(message)
-        except grpc.aio.AioRpcError as e:
-            print(f"Subscription ended: {e}")
+        async for notification in self._notification_stream:
+            message = Message(
+                notification.client_message.client_id,
+                notification.client_message.text)
+            self.message_queue.put(message)
 
-    async def _start(self):
-        channel = grpc.aio.insecure_channel(self._url)
-        self.stub = chat_pb2_grpc.ChatServiceStub(channel)
-
+    async def _subscribe(self):
         # Subscribe to the Chat server and ensure we can read
         # the stream of notifications sent back.
         request = chat_pb2.SubscribeRequest(client_id=self._client_id)
         self._notification_stream = self.stub.Subscribe(request)
-        self._notification_handler_task = asyncio.create_task(
-            self._notification_handler()
-        )
+        await self._notification_handler()
+
+    async def _start(self):
+        channel = grpc.aio.insecure_channel(self._url)
+        self.stub = chat_pb2_grpc.ChatServiceStub(channel)
+        try:
+            await Retry(self._subscribe, 5, 1).try_rpc()
+        except grpc.aio.AioRpcError as e:
+            messagebox.showerror("Error", f"Failed to join server:\n\n{e}")
 
     def _asyncio_thread(self):
         asyncio.set_event_loop(self._loop)
         self._loop.run_until_complete(self._start())
-        self._loop.run_forever()
 
     async def _send_message(self, text):
         request = chat_pb2.ClientMessage(
