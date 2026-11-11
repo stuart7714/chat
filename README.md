@@ -1,6 +1,10 @@
 # chat
 A basic chat C++ server and Python client for programming practice with gRPC
 
+Click on the short video to watch:
+
+[![Watch the video](https://img.youtube.com/vi/OSBo-o6DI8w/maxresdefault.jpg)](https://youtu.be/OSBo-o6DI8w)
+
 ## Overview
 
 This basic chat utility has two components:
